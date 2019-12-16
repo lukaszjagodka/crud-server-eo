@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     accountCode: DataTypes.STRING
   }, {});
   Account.associate = function(models) {
-    // associations can be defined here
+    Account.belongsTo(models.User)
   };
   return Account;
 };
