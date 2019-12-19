@@ -23,6 +23,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       userId: {
+        allowNull: true,
         type: Sequelize.INTEGER
       }
     });
