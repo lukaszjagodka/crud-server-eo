@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const register_mail = require('../mailer/register_mail')
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -34,6 +34,7 @@ router.post('/register', (req, res) => {
       },{
         fields: ['name', 'email', 'password', 'token'] 
       }).then(()=> {
+        register_mail(email, token)
         return res.json({
           succes:true
         });
