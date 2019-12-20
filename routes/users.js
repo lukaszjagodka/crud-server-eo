@@ -39,12 +39,45 @@ router.post('/register', (req, res) => {
         register_mail(adres, token)
         console.log(adres, token)
         return res.json({
-          succes:true
+          success:true
         });
       }).catch(err => console.log(err));
     }
   });
 });
 
+router.get('/register/:token', (req, res) => {
+  console.log('Wakanda foreva!')
+  User.findOne({
+    where: {
+      token: req.params.token
+    }
+  }).then(user => {
+    if(!user){
+      return res.json({
+        success: false,
+        message: 'Invalid token.'
+      })
+    }else{
+      if(user.dataValues.active){
+        return res.json({
+          success: false,
+          message: 'Account is already active.'
+        });
+      }else{
+        User.update({
+          active: true
+        },{
+          where: {id: user.dataValues.id}
+        }).then(()=> {
+          return res.json({
+            success: true,
+            message: 'Your account is active now. Please log in.'
+          });
+        }).catch(err => console.log(err));
+      }
+    }
+  }).catch(err => console.log(err));
+});
 
 module.exports = router;
