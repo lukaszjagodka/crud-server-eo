@@ -20,6 +20,7 @@ router.post('/register', (req, res) => {
       return token = buffer.toString('hex');
     }
   });
+  let mail = req.body.email.trim();
   let password = req.body.password;
   bcrypt.hash(password, saltRounds, function(err, hash) {
     let password = hash;
@@ -28,13 +29,15 @@ router.post('/register', (req, res) => {
     }else{
       User.create({
         name: req.body.name.trim(),
-        email: req.body.email.trim(),
+        email: mail,
         password: password,
         token: token
       },{
         fields: ['name', 'email', 'password', 'token'] 
       }).then(()=> {
-        register_mail(email, token)
+        let adres = mail;
+        register_mail(adres, token)
+        console.log(adres, token)
         return res.json({
           succes:true
         });
