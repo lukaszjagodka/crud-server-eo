@@ -47,7 +47,6 @@ router.post('/register', (req, res) => {
 });
 
 router.get('/register/:token', (req, res) => {
-  console.log('Wakanda foreva!')
   User.findOne({
     where: {
       token: req.params.token
@@ -79,5 +78,43 @@ router.get('/register/:token', (req, res) => {
     }
   }).catch(err => console.log(err));
 });
+
+router.post('/login', (req, res)=> {
+  const userPassword = req.body.password
+  const email = req.body.email
+  User.findOne({
+    where: {
+      email: email
+    }
+  }).then(User =>{
+    if(User.active){
+      //account active, check password
+      const hashPassword = User.password
+      bcrypt.compare(userPassword, hashPassword, function(err, result) {
+        if(err){console.log(err)}
+        if(result){
+          console.log('User is logged.');
+          return res.json({
+            success: true,
+            message:'User is logged.'
+          })
+        }else{
+          console.log('Wrong password.');
+          return res.json({
+            success: false,
+            message:'Wrong password.'
+          })
+        }
+      });
+    }else{
+      //user.active is false 
+      console.log('Account not active.')
+      return res.json({
+        success: false,
+        message:'Account is not active.'
+      })
+    }
+  }).catch((err)=> console.log('No user in the database'));
+})
 
 module.exports = router;
