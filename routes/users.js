@@ -3,6 +3,8 @@ const router = express.Router();
 const register_mail = require('../mailer/register_mail')
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const passport = require('passport');
+const { check, validationResult } = require('express-validator');
 const saltRounds = 10;
 
 const User = require('../database/models').User
@@ -13,8 +15,15 @@ const User = require('../database/models').User
 // });
 
 
-router.post('/register', (req, res) => {
-  console.log('body', req.body)
+router.post('/register',[
+  check('name').isLength({ min: 3 }),
+  check('email').isEmail(),
+  check('password').isLength({ min: 5 })
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
   crypto.randomBytes(48, function(err, buffer) {
     if(err){console.log(err)}else{
       return token = buffer.toString('hex');
@@ -39,7 +48,8 @@ router.post('/register', (req, res) => {
         register_mail(adres, token)
         console.log(adres, token)
         return res.json({
-          success:true
+          success: true,
+          message: 'Activation message was send on email.'
         });
       }).catch(err => console.log(err));
     }
