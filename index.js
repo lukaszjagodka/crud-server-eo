@@ -1,12 +1,30 @@
 const express = require('express')
 const app = express()
+const session = require('express-session');
+const passport = require('passport');
 const port = 3001
-
-const User =require('./database/models').User
-const Account = require('./database/models').Account
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
+// const User =require('./database/models').User
+
+app.use(session({
+  secret: 'tirururu',
+  cookie: {
+    maxAge: 1000*60*15
+  },
+  name: 'sid',
+  resave: false,
+  saveUninitialized: false,
+  rolling: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+require('./config/passport')(passport);
+
+
+  
 // User.create({
 //     name: 'Lukaszsz',
 //     email: 'jakistamta',
