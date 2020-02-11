@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const session = require('express-session');
 const passport = require('passport');
+const keys = require('./config/keys');
 const port = 3001
 
 app.use(express.json());
@@ -9,9 +10,9 @@ app.use(express.urlencoded({ extended: true }))
 // const User =require('./database/models').User
 
 app.use(session({
-  secret: 'tirururu',
+  secret: keys.session.cookieKey,
   cookie: {
-    maxAge: 1000*60*15
+    maxAge: 24*60*60*1000
   },
   name: 'sid',
   resave: false,

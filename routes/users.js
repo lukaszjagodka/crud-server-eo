@@ -4,10 +4,13 @@ const register_mail = require('../mailer/register_mail')
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
+const keys = require('../config/keys');
+const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 const saltRounds = 10;
 
 const User = require('../database/models').User
+
 
 router.post('/register',[
   check('name').isLength({ min: 3 }),
@@ -88,15 +91,15 @@ router.get('/register/:token', (req, res) => {
   }).catch(err => console.log(err));
 });
 
-router.get('/login', (req, res) => {
+router.get('/login', authenticateToken, (req, res) => {
   if (req.user) {
     res.json({
-      success: false,
+      success: true,
       userLogged: req.isAuthenticated()
     });
   } else {
     res.json({
-      success: true,
+      success: false,
       userLogged: req.isAuthenticated()
     });
   }
@@ -118,49 +121,46 @@ router.post('/login', (req, res, next)=> {
         return next(err);
       }
       
-      return res.json({
-        success: true,
-        user: user
+      const username = req.body.email
+      const user = { name: username}
+      const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey)
+      User.update({
+        authtoken: accessToken
+      },{
+        where: {email: user.name}
+      }).then(()=> {
+        return res.json({
+          success: true,
+          accessToken: accessToken
+        });
       });
     });
   })(req, res, next);
-  // AUTHENTICATE V0.1
-
-  // const userPassword = req.body.password
-  // const email = req.body.email
-  // User.findOne({
-  //   where: {
-  //     email: email
-  //   }
-  // }).then(User =>{
-  //   if(User.active){
-  //     //account active, check password
-  //     const hashPassword = User.password
-  //     bcrypt.compare(userPassword, hashPassword, function(err, result) {
-  //       if(err){console.log(err)}
-  //       if(result){
-  //         console.log('User is logged.');
-  //         return res.json({
-  //           success: true,
-  //           message:'User is logged.'
-  //         })
-  //       }else{
-  //         console.log('Wrong password.');
-  //         return res.json({
-  //           success: false,
-  //           message:'Wrong password.'
-  //         })
-  //       }
-  //     });
-  //   }else{
-  //     //user.active is false 
-  //     console.log('Account not active.')
-  //     return res.json({
-  //       success: false,
-  //       message:'Account is not active.'
-  //     })
-  //   }
-  // }).catch((err)=> console.log('No user in the database'));
 })
+
+function authenticateToken(req, res, next){
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+  if ( token == null ) return res.sendStatus(401)
+  jwt.verify(token, keys.access_token_secret.tokenKey, (err, user) => {
+    if(err) return res.sendStatus(403)
+    User.findOne({
+      where: {email: req.body.email}
+    }).then(baseUser =>{
+      // console.log(baseUser.dataValues.email)
+      // console.log(baseUser.dataValues.authtoken)
+      if(user.name == baseUser.dataValues.email){
+        req.user = user
+        next()
+      }else{
+        res.json({
+          success: false,
+          userLogged: req.isAuthenticated(),
+          message: 'Authentication token is wrong or expire'
+        });
+      }
+    })
+  })
+}
 
 module.exports = router;
