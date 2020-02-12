@@ -123,7 +123,7 @@ router.post('/login', (req, res, next)=> {
       
       const username = req.body.email
       const user = { name: username}
-      const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey)
+      const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey /*, {expiresIn: '20s'}*/)
       User.update({
         authtoken: accessToken
       },{
