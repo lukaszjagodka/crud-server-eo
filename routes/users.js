@@ -11,6 +11,28 @@ const saltRounds = 10;
 
 const User = require('../database/models').User
 
+// router.get('/', authenticateToken, (req, res) => {
+//   res.json({
+//     success: true,
+//     userLogged: req.isAuthenticated()
+//   });
+// });
+
+router.get('/account', authenticateToken, (req, res) => {
+  return res.json({
+    success: true,
+    username: req.user.name,
+    userLogged: req.isAuthenticated()
+  });
+});
+
+router.get('/logout', authenticateToken, (req, res) => {
+  req.logout();
+  return res.json({
+        success: true,
+        message: 'You have been logged out.'
+      });
+});
 
 router.post('/register',[
   check('name').isLength({ min: 3 }),
@@ -123,7 +145,7 @@ router.post('/login', (req, res, next)=> {
       
       const username = req.body.email
       const user = { name: username}
-      const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey /*, {expiresIn: '20s'}*/)
+      const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey /*, {expiresIn: '30s'}*/)
       User.update({
         authtoken: accessToken
       },{
@@ -147,8 +169,6 @@ function authenticateToken(req, res, next){
     User.findOne({
       where: {email: req.body.email}
     }).then(baseUser =>{
-      // console.log(baseUser.dataValues.email)
-      // console.log(baseUser.dataValues.authtoken)
       if(user.name == baseUser.dataValues.email){
         req.user = user
         next()
