@@ -80,6 +80,13 @@ router.post('/register',[
 //   res.status(200).send()
 // });
 
+router.get('/deleteaccount', authenticateToken, (req, res) => {
+  return res.json({
+    success: true,
+    message: 'User was delete'
+  });
+});
+
 router.get('/register/:token', (req, res) => {
   User.findOne({
     where: {
@@ -143,8 +150,9 @@ router.post('/login', (req, res, next)=> {
         return next(err);
       }
       
-      const username = req.body.email
-      const user = { name: username}
+      const email = req.body.email
+      const name = req.user.dataValues.name
+      const user = { name: name, email: email}
       const accessToken = jwt.sign(user, keys.access_token_secret.tokenKey /*, {expiresIn: '30s'}*/)
       User.update({
         authtoken: accessToken
