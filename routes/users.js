@@ -149,7 +149,6 @@ router.post('/login', (req, res, next)=> {
       if (err){
         return next(err);
       }
-      
       const email = req.body.email
       const name = req.user.dataValues.name
       const user = { name: name, email: email}
