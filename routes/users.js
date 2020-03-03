@@ -65,7 +65,6 @@ router.post('/register',[
       }).then(()=> {
         let adres = mail;
         register_mail(adres, token)
-        console.log(adres, token)
         return res.json({
           success: true,
           message: 'Activation message was send on email.'
@@ -75,15 +74,52 @@ router.post('/register',[
   });
 });
 
-// router.post('/passwordchange/', (req, res) => {
-//   const { password, newpassword, renewpassword} = req.body;
-//   res.status(200).send()
-// });
+router.post('/passwordchange/', (req, res) => {
+  console.log(req.body, 'REQBODY')
+  const actualPassword = req.body.actualPassword
+  const newPassword = req.body.newPassword
+  User.findOne({
+    where: {
+      email: req.body.email
+    }
+  }).then(foundUser => {
+    bcrypt.compare(actualPassword, foundUser.dataValues.password, function(err, result) {
+      if(err){
+        return res.json({
+          success: false,
+          message: 'Actual password is wrong.'
+        })
+      }else{ //result = true
+        bcrypt.hash(newPassword, 10, function(err, hash) {
+          if(err){
+            return res.json({
+              success: false,
+              message: 'Problem with new hash.'
+            })
+          }else{
+            console.log(hash)
+            foundUser.update({
+              password: hash
+            },{
+              where: {id: foundUser.dataValues.email}
+            }).then(()=> {
+              return res.json({
+                success: true,
+                message: 'New password confirmed.'
+              })
+            })
+          }
+        });
+      }
+    });
+  });
+});
 
-router.get('/deleteaccount', authenticateToken, (req, res) => {
+
+router.delete('/deleteaccount', authenticateToken, (req, res) => {
   return res.json({
     success: true,
-    message: 'User was delete'
+    message: 'Ok'
   });
 });
 
@@ -156,7 +192,7 @@ router.post('/login', (req, res, next)=> {
       User.update({
         authtoken: accessToken
       },{
-        where: {email: user.name}
+        where: {email: user.email}
       }).then(()=> {
         return res.json({
           success: true,
@@ -168,7 +204,12 @@ router.post('/login', (req, res, next)=> {
 })
 
 function authenticateToken(req, res, next){
-  const authHeader = req.headers['authorization']
+  // console.log(req.body, 'REQ FROM SERVER') 
+  
+  console.log('\x1b[36m%s\x1b[34m', 'REQ FROM SERVER');
+  console.log(req.headers /*, "REQ FROM SERVER"*/)
+
+  const authHeader = req.headers['Authorization']
   const token = authHeader && authHeader.split(' ')[1]
   if ( token == null ) return res.sendStatus(401)
   jwt.verify(token, keys.access_token_secret.tokenKey, (err, user) => {
@@ -176,7 +217,7 @@ function authenticateToken(req, res, next){
     User.findOne({
       where: {email: req.body.email}
     }).then(baseUser =>{
-      if(user.name == baseUser.dataValues.email){
+      if(user.email == baseUser.dataValues.email){
         req.user = user
         next()
       }else{
