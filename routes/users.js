@@ -11,13 +11,6 @@ const saltRounds = 10;
 
 const User = require('../database/models').User
 
-// router.get('/', authenticateToken, (req, res) => {
-//   res.json({
-//     success: true,
-//     userLogged: req.isAuthenticated()
-//   });
-// });
-
 router.get('/account', authenticateToken, (req, res) => {
   return res.json({
     success: true,
@@ -37,7 +30,7 @@ router.get('/logout', authenticateToken, (req, res) => {
 router.post('/register',[
   check('name').isLength({ min: 3 }),
   check('email').isEmail(),
-  check('password').isLength({ min: 5 })
+  check('password').isLength({ min: 4 })
 ], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -54,6 +47,10 @@ router.post('/register',[
     let password = hash;
     if(err){
       console.log(err)
+      return res.json({
+        success: false,
+        message: 'Error from bcInReg.'
+      });
     }else{
       User.create({
         name: req.body.name.trim(),
@@ -75,7 +72,6 @@ router.post('/register',[
 });
 
 router.post('/passwordchange/', (req, res) => {
-  console.log(req.body, 'REQBODY')
   const actualPassword = req.body.actualPassword
   const newPassword = req.body.newPassword
   User.findOne({
@@ -97,7 +93,6 @@ router.post('/passwordchange/', (req, res) => {
               message: 'Problem with new hash.'
             })
           }else{
-            console.log(hash)
             foundUser.update({
               password: hash
             },{
@@ -115,11 +110,39 @@ router.post('/passwordchange/', (req, res) => {
   });
 });
 
-
-router.delete('/deleteaccount', authenticateToken, (req, res) => {
-  return res.json({
-    success: true,
-    message: 'Ok'
+router.delete('/deleteaccount', /*authenticateToken*/(req, res) => {
+  const {email, password} = req.body;
+  console.log(email, password)
+  console.log(req.body)
+  User.findOne({
+    where: {
+      email: req.body.email
+    }
+  }).then(foundUser => {
+    bcrypt.compare(password, foundUser.dataValues.password, function(err, result) {
+      if(err){
+        return res.json({
+          success: false,
+          message: err
+        })
+      }
+      if(!result){
+        return res.json({
+          success: false,
+          message: 'Wrong password.'
+        })
+      }else{
+        foundUser.destroy({
+          where: {
+            id: foundUser.dataValues.email
+          }
+        })
+        return res.json({
+          success: true,
+          message: 'Account was deleted.'
+        });
+      }
+    })
   });
 });
 
@@ -204,8 +227,6 @@ router.post('/login', (req, res, next)=> {
 })
 
 function authenticateToken(req, res, next){
-  // console.log(req.body, 'REQ FROM SERVER') 
-  
   console.log('\x1b[36m%s\x1b[34m', 'REQ FROM SERVER');
   console.log(req.headers /*, "REQ FROM SERVER"*/)
 
@@ -224,7 +245,7 @@ function authenticateToken(req, res, next){
         res.json({
           success: false,
           userLogged: req.isAuthenticated(),
-          message: 'Authentication token is wrong or expire'
+          message: 'Authentication token is wrong or expire.'
         });
       }
     })
