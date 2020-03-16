@@ -61,7 +61,7 @@ router.post('/register',[
         fields: ['name', 'email', 'password', 'token'] 
       }).then(()=> {
         let adres = mail;
-        register_mail(adres, token)
+        // register_mail(adres, token)
         return res.json({
           success: true,
           message: 'Activation message was send on email.'

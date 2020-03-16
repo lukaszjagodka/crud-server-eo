@@ -1,4 +1,4 @@
-const apiKey = require('../apikey/mail')
+// const apiKey = require('../apikey/mail')
 
 module.exports  = function register_mail(address, token){
 
