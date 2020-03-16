@@ -1,7 +1,8 @@
 module.exports = {
   env: {
-    browser: true,
+    browser: false,
     es6: true,
+    node: true,
   },
   extends: [
     'plugin:react/recommended',
@@ -20,7 +21,12 @@ module.exports = {
   },
   plugins: [
     'react',
+    'eslint-plugin-node'
   ],
   rules: {
+    "no-console": "off",
+    "indent": ["error", 2],
+    semi: "error",
+    quotes: ["error", "single"]
   },
 };
